@@ -1,0 +1,68 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-03-18"
+---
+
+```{r}
+library(tidyverse)
+
+library(conflicted)
+library(dplyr)
+
+```  
+
+
+
+```{r}
+Daily <- read_delim("Oryxdata/daily_count.csv",delim=",") 
+
+```
+
+
+```{r}  
+Daily %>%
+  dplyr::filter(country == "Russia", equipment_type != "All Types") %>%
+  dplyr::filter(destroyed_diff >= "0") %>%
+  arrange(date_recorded) %>%
+  ggplot(aes(x = date_recorded, y = destroyed_diff)) +
+  geom_line() +
+  labs(title = "Daily Russian Equipment Losses in Ukraine",
+       x = "Date",
+       y = "Number of Destroyed Equipment")
+
+  
+
+```
+
+```{r}
+System <- read_delim("Oryxdata/totals_by_system.csv",delim=",") 
+```
+#Regroupe tout les chars des nations qui sont de la Série des T (T-64, T-72, T-80, T-90 ...)
+```{r}
+Total_destroyed_per_nation <- System %>%
+  dplyr::mutate(system = sub("^\\d+", "", system)) %>%
+  dplyr::filter(grepl(' T-', system)) %>%
+  dplyr::filter(grepl('destroyed', status)) %>%
+  group_by(country) 
+
+Total_destroyed_per_nation
+```
+
+```{r}
+Total_destroyed_per_nation <- System %>%
+  dplyr::mutate(system = sub("^\\d+", "", system)) %>%
+  dplyr::filter(grepl(' T-', system)) %>%
+  dplyr::filter(grepl('destroyed', status)) %>%
+  group_by(country, date_recorded) %>%
+  summarise(destroyed_count = n(), .groups = 'drop') %>%
+  ggplot(aes(x = date_recorded, y = destroyed_count, color = country)) +
+  geom_line() +
+  labs(title = "Daily Tank Losses by Nation",
+       x = "Date",
+       y = "Number of Tanks Destroyed")
+
+Total_destroyed_per_nation
+```
+
+
