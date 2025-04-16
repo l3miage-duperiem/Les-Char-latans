@@ -164,7 +164,7 @@ NATO_MBT_old
 NATO_MBT_modern
 ```
 
-Table rassemblant les systèmes par grandes familles
+Graphiques en barres des totaux par grande famille de blindés et par pays(tous les chars OTAN sont comptés comme faisant partie de la même famille du fait de leur petits effectifs) et des totaux par niveau de modernisation et par pays
 ```{r}
 all_MBTs <- NATO_MBT_modern %>%
   union(T72_modern) %>%
@@ -175,7 +175,7 @@ all_MBTs <- NATO_MBT_modern %>%
   union(T80_old) %>%
   union(T90_old) %>%
   union(T50_tanks) %>%
-  # union(T60_tanks) %>%
+  union(T60_tanks) %>%
   union(T72_obsolete) %>%
   union(T72_unknown) %>%
   union(T80_unknown) %>%
@@ -192,4 +192,53 @@ totals_by_age <- all_MBTs %>%
 all_MBTs
 totals_by_family
 totals_by_age
+```
+
+Graphiques des pertes visuellement confirmées par mois ou par années et par pays
+```{r}
+all_MBTs_losses_per_month <- all_MBTs %>%
+  # On exclus le  mois d'avril car il n'est pas terminé et pourrait biaiser l'impression faite au lecteur
+  filter(!grepl('2025-04', date_recorded)) %>%
+  mutate(date_recorded = sub('.{3}$','',date_recorded))
+
+all_MBTs_losses_per_year <- all_MBTs_losses_per_month %>%
+  # On exclue l'année 2025 car elle n'est pas terminée et pourrait biaiser l'impression faite au lecteur
+  filter(!grepl('2025', date_recorded)) %>%
+  mutate(date_recorded = sub('.{3}$','',date_recorded))
+
+totals_losses_by_month <- all_MBTs_losses_per_month %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=date_recorded, fill = country), stat = "count", width = 0.5) 
+
+totals_losses_by_year <- all_MBTs_losses_per_year %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=date_recorded, fill = country), stat = "count", width = 0.5) 
+
+all_MBTs_losses_per_month
+totals_losses_by_month
+totals_losses_by_year
+```
+
+Graphiques de la ditribution des pertes visuellement confirmées en fonction de la tranche d'age
+```{r}
+distribution_losses_per_age_and_per_month <- all_MBTs_losses_per_month %>%
+  ggplot(aes(date_recorded, fill = age)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(name = "percent",
+                     breaks = c(0, 0.25, 0.5, 0.75, 1), 
+                     labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)))
+  
+distribution_losses_per_age_and_per_month
+```
+
+Graphiques de la distribution des types de pertes visuellement confirmées par mois
+```{r}
+distribution_losses_by_status_per_month <- all_MBTs_losses_per_month %>%
+  ggplot(aes(date_recorded, fill = status)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(name = "percent",
+                     breaks = c(0, 0.25, 0.5, 0.75, 1), 
+                     labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)))
+
+distribution_losses_by_status_per_month
 ```
