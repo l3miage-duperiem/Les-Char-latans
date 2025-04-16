@@ -1,0 +1,195 @@
+---
+title: "Etude des pertes blindées au cours du conflit russo-ukrainien"
+author: "COLOMBAN Nathan, DELEUZE-DORDRON Axel, DUPERIER-CATALAZ Mathis, SPINNLER Paul, TIDJANI Manyl"
+date: "2025-04-7"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+Total des pertes visuellement confirmées de tanks (détruits, abandonnés, capturés ou endommagés) par pays entre le 24/02/2022 et le 07/04/2025
+
+```{r}
+totals_by_type <- read.delim("oryx_data/oryx_data/totals_by_type.csv",sep = ",")
+  
+total_tank_losses <- totals_by_type %>% 
+  filter(grepl('Tanks', equipment_type)) %>%
+  filter(!grepl('Losses', equipment_type))
+  
+total_tank_losses
+```
+
+Ensemble de toutes les pertes visuellement confirmées entre le 24/02/2022 et le 07/04/2025
+```{r}
+all_vehicles <- read.delim("oryx_data/oryx_data/totals_by_system.csv",sep = ",")
+
+all_vehicles
+```
+
+Découpage en sous tables des MBT de la série T (conception soviétique) en fonction des grandes familles de modèles :
+T-50 : reliques du passé
+T-60 : obsolètes
+T-72 : tables à redécouper en fonction du niveau de modernisation
+  Note : les PT-91 sont une variante modernisée polonaise du T72, d'où leur inclusion ci-dessous
+T-80 : tables à redécouper en fonction du niveau de modernisation
+T-90 : tables à redécouper en fonction du niveau de modernisation
+```{r}
+all_Tseries_without_battalion_number <- all_vehicles %>%
+  mutate(system = sub("[0-9]*", "", system)) %>%
+  filter(grepl('T-[5-9]|PT-91', system)) 
+
+T50_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-5', system)) %>%
+  mutate(system_family = 'T-50 serie') %>%
+  mutate(age = 'obsolete')
+
+T60_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-6', system)) %>%
+  mutate(system_family = 'T-60 serie') %>%
+  mutate(age = 'obsolete')
+
+T72_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-72|PT-91', system)) %>%
+  mutate(system_family = 'T-72 serie') %>%
+  mutate(age = 'obsolete')
+
+T80_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-8', system)) %>%
+  mutate(system_family = 'T-80 serie') %>%
+  mutate(age = 'old')
+
+T90_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-90', system)) %>%
+  mutate(system_family = 'T-90 serie') %>%
+  mutate(age = 'old')
+
+all_Tseries_without_battalion_number
+T50_tanks
+T60_tanks
+T72_tanks
+T80_tanks
+T90_tanks
+```
+
+Découpage en sous tables des modèles de la famille des T72 :
+```{r}
+T72_obsolete <- T72_tanks %>%
+  filter(grepl('A|B|Ural', system)) %>%
+  filter(!grepl('Obr.|B3|EA', system))
+
+T72_old <- T72_tanks %>%
+  filter(grepl('1989|M|EA', system)) %>%
+  filter(!grepl('AMT|Unknown', system)) %>%
+  mutate(age = 'old')
+
+T72_modern <- T72_tanks %>%
+  filter(grepl('2014|2022|B3|PT', system)) %>%
+  mutate(age = 'modern')
+
+T72_unknown <- T72_tanks %>%
+  filter(grepl('Unknown', system)) %>%
+  mutate(age = 'unknown')
+
+T72_obsolete
+T72_old
+T72_modern
+T72_unknown
+```
+
+Découpage en sous tables des modèles de la famille des T80
+```{r}
+T80_old <- T80_tanks %>%
+  filter(grepl('B|U', system)) %>%
+  filter(!grepl('BVM|2022|UD', system))
+
+T80_modern <- T80_tanks %>%
+  filter(grepl('BVM|2022|UD', system)) %>%
+  mutate(age = 'modern')
+
+T80_unknown <- T80_tanks %>%
+  filter(grepl('Unknown', system)) %>%
+  mutate(age = 'unknown')
+
+T80_old
+T80_modern
+T80_unknown
+```
+
+Découpage en sous tables des modèles de la famille des T90
+```{r}
+T90_old <- T90_tanks %>%
+  filter(grepl('A|S', system))
+
+T90_modern <- T90_tanks %>%
+  filter(grepl('M', system)) %>%
+  mutate(age = 'modern')
+
+T90_unknown <- T90_tanks %>%
+  filter(grepl('Unknown', system)) %>%
+  mutate(age = 'unknown')
+
+T90_old
+T90_modern
+T90_unknown
+```
+
+Table contenant tous les MBT qui ne sont pas de la série T (conception OTAN)
+```{r}
+all_NATO_without_battalion_number <- all_vehicles %>%
+  mutate(system = sub("[0-9]*", "", system)) %>%
+  filter(!grepl('Russia|Soviet Union', origin)) %>%
+  filter(grepl('Leopard|Abrams|Challenger|Stridsvagn',system)) %>%
+  filter(!grepl('mine-clearing|Recovery',system)) %>%
+  mutate(system_family = 'NATO') %>%
+  mutate(age = 'modern')
+
+NATO_MBT_old <- all_NATO_without_battalion_number %>%
+  filter(grepl('Leopard 1', system)) %>%
+  mutate(age = 'old')
+
+NATO_MBT_modern <- all_NATO_without_battalion_number %>%
+  filter(!grepl('Leopard 1', system))
+
+all_NATO_without_battalion_number
+NATO_MBT_old
+NATO_MBT_modern
+```
+
+Table rassemblant les systèmes par grandes familles
+```{r}
+all_MBTs <- NATO_MBT_modern %>%
+  union(T72_modern) %>%
+  union(T80_modern) %>%
+  union(T90_modern) %>%
+  union(NATO_MBT_old) %>%
+  union(T72_old) %>%
+  union(T80_old) %>%
+  union(T90_old) %>%
+  union(T50_tanks) %>%
+  # union(T60_tanks) %>%
+  union(T72_obsolete) %>%
+  union(T72_unknown) %>%
+  union(T80_unknown) %>%
+  union(T90_unknown)
+
+totals_by_family <- all_MBTs %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=system_family, fill = country), stat = "count", width = 0.5)
+  
+totals_by_age <- all_MBTs %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=age, fill = country), stat = "count", width = 0.5) 
+
+all_MBTs
+totals_by_family
+totals_by_age
+```
