@@ -1,0 +1,455 @@
+---
+title: "Rendu Charlatans"
+author: "COLOMBAN Nathan, DELEUZE-DORDRON Axel, DUPERIER-CATALAZ Mathis, SPINNLER Paul, TIDJANI Manyl"
+date: '2025-04-15'
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, include=FALSE}
+library(tidyverse)
+options(tibble.print_max = Inf)
+```
+
+```{r echo=FALSE, include=FALSE}
+daily_count <- read_delim("./OryxData/daily_count.csv", delim=",")
+totals_by_type <- read.delim("./OryxData/totals_by_type.csv",sep = ",")
+totals_by_system <- read.delim("./OryxData/totals_by_system.csv",sep = ",")
+```
+
+# Introduction
+
+## Contexte
+Depuis le début de l'invasion de l'Ukraine par la Russie en février 2022, de nombreuses sources tentent de documenter les pertes militaires des deux camps. Parmi elles, le collectif indépendant Oryx propose une base de données visuelle et systématique des équipements militaires perdus. Leur méthodologie repose sur des preuves visuelles publiquement disponibles (photos, vidéos géolocalisées), complétées dans de rares cas par des confirmations officielles.
+
+Le répertoire Github est géré par Daniel P. Scarnecchia, chercheur à la Harvard Humanitarian Initiative (HHI). Il dirige les travaux sur les normes et l’éthique au sein du Signal Program on Human Security and Technology. Son travail porte sur l’impact de la technologie en contexte de crise, l’éthique de la donnée et les pratiques de recherche fondées sur des preuves réelles dans le secteur humanitaire.
+
+Le Harvard Humanitarian Initiative, rattaché à l'École de Santé Publique T.H. Chan, est un centre interdisciplinaire dont l’objectif est de réduire les souffrances humaines en zones de guerre ou de catastrophe, par la recherche appliquée, la formation, et l’élaboration de stratégies humanitaires plus efficaces et respectueuses des droits humains.
+
+### Problématique: Comment évolue les pertes de chars d'assaut durant l'invasion Russe en Ukraine ?
+
+### Description de l'ensemble de données
+
+Le jeu de données utilisé dans cette étude est directement issu de ces inventaires rigoureux. Il se compose de 2 tables principales :
+
+**daily_count.csv** : Fournit une comptabilisation quotidienne des pertes d’équipements selon leur type (char, avion, etc.) et leur statut (détruit, abandonné, capturé, endommagé).
+
+**total_by_system.csv** : Détaille chaque observation individuelle d’équipement perdu, avec son pays d’origine, son statut, et un lien vers la preuve visuelle.
+
+De ces tables en résulte d'autres aggrégats, seule une nous sera utile ici:
+
+**totals_by_type.csv** : Agrège les pertes totales par pays et par type d’équipement.
+
+Les données sont conservatrices par nature, car seules les pertes confirmées visuellement sont comptabilisées, ce qui sous-estime probablement les pertes réelles. Toutefois, cette rigueur méthodologique garantit un niveau de fiabilité élevé sur les données recensées.
+
+## Objectif de l'étude
+
+Cette étude vise à analyser l’évolution des pertes de chars d’assaut au cours du conflit russo-ukrainien. En particulier, elle cherche à mettre en évidence les tendances temporelles de ces pertes et à les corréler avec des événements marquants du conflit (offensives majeures, contre-attaques, annonces stratégiques, etc.).
+
+L’objectif final est de mieux comprendre comment la dynamique du champ de bataille — en termes de pertes matérielles — reflète ou réagit aux évolutions stratégiques et tactiques du conflit.
+
+# Méthodologie
+
+## Procédures de nettoyage des données
+
+Il arrive que la colonne 'equipement_type' prenne une de ces valeurs:
+
+- "Losses excluding Recon Drones and Trucks - [NOMBRE], of which: destroyed: [NOMBRE], damaged: [NOMBRE], abandoned: [NOMBRE], captured: [NOMBRE]",
+- "Losses of Armoured Combat Vehicles [Tanks, AFVs, IFVs, APCs, and MRAPs] - [NOMBRE], of which: destroyed: [NOMBRE], damaged: [NOMBRE], abandoned: [NOMBRE], captured: [NOMBRE]"
+
+Ces observations synthétiques semblent représenter un cumul global des pertes d’équipements, et sont redondantes avec les totaux calculables à partir des données plus détaillées. Les lignes correspondantes sont retirées.
+
+```{r echo=FALSE}
+daily_count <- daily_count %>%
+   filter(!grepl('Losses', equipment_type))
+```
+
+
+Depuis la table 'totals_by_system' sont sélectionnés les chars préfixé par "T-[5-9]" ou "PT-91". 
+
+Découpage en sous tables des MBT de la série T (conception soviétique) en fonction des grandes familles de modèles :
+T-50 : reliques du passé
+T-60 : obsolètes
+T-72 : tables à redécouper en fonction du niveau de modernisation
+  Note : les PT-91 sont une variante modernisée polonaise du T72, d'où leur inclusion
+T-80 : tables à redécouper en fonction du niveau de modernisation
+T-90 : tables à redécouper en fonction du niveau de modernisation
+
+```{r echo=FALSE}
+all_Tseries_without_battalion_number <- totals_by_system %>%
+  mutate(system = sub("[0-9]*", "", system)) %>%
+  filter(grepl('T-[5-9]|PT-91', system)) 
+
+T50_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-5', system)) %>%
+  mutate(system_family = 'T-50 serie') %>%
+  mutate(age = 'obsolete')
+
+T60_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-6', system)) %>%
+  mutate(system_family = 'T-60 serie') %>%
+  mutate(age = 'obsolete')
+
+T72_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-72|PT-91', system)) %>%
+  mutate(system_family = 'T-72 serie') %>%
+  mutate(age = 'obsolete')
+
+T80_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-8', system)) %>%
+  mutate(system_family = 'T-80 serie') %>%
+  mutate(age = 'old')
+
+T90_tanks <- all_Tseries_without_battalion_number %>%
+  filter(grepl('T-90', system)) %>%
+  mutate(system_family = 'T-90 serie') %>%
+  mutate(age = 'old')
+
+# all_Tseries_without_battalion_number
+# T50_tanks
+# T60_tanks
+# T72_tanks
+# T80_tanks
+# T90_tanks
+```
+
+Découpage en sous tables des modèles de la famille des T72
+
+```{r echo=FALSE}
+T72_obsolete <- T72_tanks %>%
+  filter(grepl('A|B|Ural|T-72', system)) %>%
+  filter(!grepl('Obr.|2022|B3|EA', system))
+
+T72_old <- T72_tanks %>%
+  filter(grepl('1989|M|EA', system)) %>%
+  filter(!grepl('AMT', system)) %>%
+  mutate(age = 'old')
+
+T72_modern <- T72_tanks %>%
+  filter(grepl('2014|2022|B3|PT', system)) %>%
+  mutate(age = 'modern')
+
+T72_unknown <- T72_tanks %>%
+  filter(grepl('Unknown', system)) %>%
+  mutate(age = 'unknown')
+
+# T72_obsolete
+# T72_old
+# T72_modern
+# T72_unknown
+```
+
+Découpage en sous tables des modèles de la famille des T80
+
+```{r echo=FALSE}
+T80_old <- T80_tanks %>%
+  filter(grepl('B|U', system)) %>%
+  filter(!grepl('BVM|2022|UD', system))
+
+T80_modern <- T80_tanks %>%
+  filter(grepl('BVM|2022|UD', system)) %>%
+  mutate(age = 'modern')
+
+T80_unknown <- T80_tanks %>%
+  filter(grepl('Unknown', system)) %>%
+  mutate(age = 'unknown')
+
+# T80_old
+# T80_modern
+# T80_unknown
+```
+
+Découpage en sous tables des modèles de la famille des T90
+
+```{r echo=FALSE}
+T90_old <- T90_tanks %>%
+  filter(grepl('A|S', system))
+
+T90_modern <- T90_tanks %>%
+  filter(grepl('M', system)) %>%
+  mutate(age = 'modern')
+
+T90_unknown <- T90_tanks %>%
+  filter(grepl('Unknown', system)) %>%
+  mutate(age = 'unknown')
+
+# T90_old
+# T90_modern
+# T90_unknown
+```
+
+Table contenant tous les MBT qui ne sont pas de la série T (conception OTAN)
+
+```{r echo=FALSE}
+all_NATO_without_battalion_number <- totals_by_system %>%
+  mutate(system = sub("[0-9]*", "", system)) %>%
+  filter(!grepl('Russia|Soviet Union', origin)) %>%
+  filter(grepl('Leopard|Abrams|Challenger|Stridsvagn',system)) %>%
+  filter(!grepl('mine-clearing|Recovery',system)) %>%
+  mutate(system_family = 'NATO') %>%
+  mutate(age = 'modern')
+
+NATO_MBT_old <- all_NATO_without_battalion_number %>%
+  filter(grepl('Leopard 1', system)) %>%
+  mutate(age = 'old')
+
+NATO_MBT_modern <- all_NATO_without_battalion_number %>%
+  filter(!grepl('Leopard 1', system))
+
+# all_NATO_without_battalion_number
+# NATO_MBT_old
+# NATO_MBT_modern
+```
+
+Table rassemblant les systèmes par grandes familles
+
+```{r echo=FALSE}
+all_MBTs <- NATO_MBT_modern %>%
+  union(T72_modern) %>%
+  union(T80_modern) %>%
+  union(T90_modern) %>%
+  union(NATO_MBT_old) %>%
+  union(T72_old) %>%
+  union(T80_old) %>%
+  union(T90_old) %>%
+  union(T50_tanks) %>%
+  union(T60_tanks) %>%
+  union(T72_obsolete) %>%
+  union(T72_unknown) %>%
+  union(T80_unknown) %>%
+  union(T90_unknown)
+
+totals_by_family <- all_MBTs %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=system_family, fill = country), stat = "count", width = 0.5)
+  
+totals_by_age <- all_MBTs %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=age, fill = country), stat = "count", width = 0.5) 
+
+# all_MBTs
+totals_by_family
+totals_by_age
+```
+
+
+1. Évolution temporelle des pertes par grande famille (serie T vs OTAN)
+But : Voir si certaines séries (T-72, T-80, T-90, OTAN) ont connu des pics de pertes à des moments clés du conflit.
+
+```{r echo=FALSE}
+# 2) Calculer les pertes journalières totales par famille, par pays
+time_series <- all_MBTs %>%
+  mutate(date_recorded = as.Date(date_recorded)) %>%
+  group_by(country, system_family, date_recorded) %>%
+  summarise(pertes = n(), .groups = "drop") %>%
+  arrange(country, system_family, date_recorded) %>%
+  group_by(country, system_family) %>%
+  mutate(cum_pertes = cumsum(pertes)) %>%
+  ungroup()
+
+# 3) Tracer l’évolution cumulée
+ggplot(time_series, aes(x = date_recorded, y = cum_pertes, color = system_family)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~country, ncol = 1) +
+  labs(
+    title = "Évolution cumulée des pertes de chars par famille (2022–2024)",
+    x = "Date",
+    y = "Pertes cumulées",
+    color = "Famille de chars"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+2. Répartition des âges / générations de chars perdus
+But : Comparer la vulnérabilité des chars « obsolètes » vs « modernes ».
+
+```{r echo=FALSE}
+ggplot(all_MBTs, aes(x = age, fill = country)) +
+  geom_bar(position = "stack") +
+  labs(
+    title = "Distribution par âge des chars perdus (familles T et OTAN)",
+    x = "Âge / génération du char",
+    y = "Nombre de pertes",
+    fill = "Camp"
+  ) +
+  theme_minimal()
+```
+
+3. Parts relatives des statuts de perte (destroyed/damaged/abandoned/captured)
+But : Voir comment se répartissent les statuts pour les chars (par pays ou par famille).
+
+```{r echo=FALSE}
+# 1. Préparer le breakdown par status
+status_breakdown <- all_MBTs %>%
+  group_by(country, status) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  # 2. Forcer la présence de tous les status pour chaque pays
+  complete(country, status, fill = list(count = 0)) %>%
+  group_by(country) %>%
+  # 3. Calculer la part en pourcentage
+  mutate(
+    total_country = sum(count),
+    pct = if_else(total_country > 0, count / total_country, 0),
+    label = if_else(
+      pct > 0,
+      paste0(round(pct * 100, 1), "%"),
+      ""                    # pas d'étiquette si 0%
+    )
+  ) %>%
+  ungroup()
+
+# 4. Tracer les camemberts
+ggplot(status_breakdown, aes(x = 1, y = pct, fill = status)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  # 5. Ajouter les labels de pourcentage centrés dans chaque tranche
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5),
+            size = 3, color = "white") +
+  facet_wrap(~ country) +
+  labs(
+    title = "Répartition des statuts de perte pour les chars",
+    fill = "Statut"
+  ) +
+  theme_void() +
+  theme(
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+4. Comparaison OTAN vs série T
+But : Savoir si les chars OTAN (Abrams, Leopard, Challenger…) ont été plus ou moins touchés que les T-series.
+
+```{r echo=FALSE}
+comparaison <- all_MBTs %>%
+  group_by(country, system_family) %>%
+  summarise(pertes = n(), .groups = "drop")
+
+ggplot(comparaison, aes(x = system_family, y = pertes, fill = country)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Comparaison des pertes de chars OTAN vs T-series",
+    x = "Famille de chars",
+    y = "Nombre de pertes",
+    fill = "Camp"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+```{r echo=FALSE}
+total_tank_losses <- totals_by_type %>% 
+  filter(grepl('Tanks', equipment_type)) %>%
+  filter(!grepl('Losses', equipment_type))
+
+total_destroyed_per_nation <- totals_by_system %>%
+  dplyr::mutate(system = sub("^\\d+", "", system)) %>%
+  dplyr::filter(grepl(' T-', system)) %>%
+  dplyr::filter(grepl('destroyed', status)) %>%
+  group_by(country)
+
+total_damaged_per_nation <- totals_by_system %>%
+  dplyr::mutate(system = sub("^\\d+", "", system)) %>%
+  dplyr::filter(grepl(' T-', system)) %>%
+  dplyr::filter(grepl('damaged', status)) %>%
+  group_by(country)
+
+total_captured_per_nation <- totals_by_system %>%
+  dplyr::mutate(system = sub("^\\d+", "", system)) %>%
+  dplyr::filter(grepl(' T-', system)) %>%
+  dplyr::filter(grepl('captured', status)) %>%
+  group_by(country)
+
+total_abandoned_per_nation <- totals_by_system %>%
+  dplyr::mutate(system = sub("^\\d+", "", system)) %>%
+  dplyr::filter(grepl(' T-', system)) %>%
+  dplyr::filter(grepl('abandoned', status)) %>%
+  group_by(country)
+```
+
+```{r echo=FALSE}
+# Fusion des totaux par état
+df_tank_losses <- bind_rows(
+  total_destroyed_per_nation %>% summarise(total = n()) %>% mutate(type = "Destroyed"),
+  total_damaged_per_nation %>% summarise(total = n()) %>% mutate(type = "Damaged"),
+  total_captured_per_nation %>% summarise(total = n()) %>% mutate(type = "Captured"),
+  total_abandoned_per_nation %>% summarise(total = n()) %>% mutate(type = "Abandoned")
+)
+
+ggplot(df_tank_losses, aes(x = country, y = total, fill = type)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Pertes de chars par pays et par état", y = "Nombre de chars", x = "Pays") +
+  theme_minimal()
+```
+
+
+# Analyse des données
+
+Graphiques des pertes visuellement confirmées par mois ou par années et par pays
+
+```{r}
+all_MBTs_losses_per_month <- all_MBTs %>%
+  # On exclus le  mois d'avril car il n'est pas terminé et pourrait biaiser l'impression faite au lecteur
+  filter(!grepl('2025-04', date_recorded)) %>%
+  mutate(date_recorded = sub('.{3}$','',date_recorded))
+
+all_MBTs_losses_per_year <- all_MBTs_losses_per_month %>%
+  # On exclue l'année 2025 car elle n'est pas terminée et pourrait biaiser l'impression faite au lecteur
+  filter(!grepl('2025', date_recorded)) %>%
+  mutate(date_recorded = sub('.{3}$','',date_recorded))
+
+totals_losses_by_month <- all_MBTs_losses_per_month %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=date_recorded, fill = country), stat = "count", width = 0.5) 
+
+totals_losses_by_year <- all_MBTs_losses_per_year %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=date_recorded, fill = country), stat = "count", width = 0.5) 
+
+# all_MBTs_losses_per_month
+totals_losses_by_month
+totals_losses_by_year
+```
+
+Graphiques de la ditribution des pertes visuellement confirmées en fonction de la tranche d'age
+
+```{r echo=FALSE}
+distribution_losses_per_age_and_per_month <- all_MBTs_losses_per_month %>%
+  ggplot(aes(date_recorded, fill = age)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(name = "percent",
+                     breaks = c(0, 0.25, 0.5, 0.75, 1), 
+                     labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)))
+  
+distribution_losses_per_age_and_per_month
+```
+
+Graphiques de la distribution des types de pertes visuellement confirmées par mois
+
+```{r echo=FALSE}
+distribution_losses_by_status_per_month <- all_MBTs_losses_per_month %>%
+  ggplot(aes(date_recorded, fill = status)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(name = "percent",
+                     breaks = c(0, 0.25, 0.5, 0.75, 1), 
+                     labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)))
+
+distribution_losses_by_status_per_month
+```
+
+
+# Conclusion
+
+# References
+**lien du dépôt GitHub:** https://github.com/scarnecchia/oryx_data
