@@ -3,7 +3,7 @@ title: "Rendu Charlatans"
 author: "COLOMBAN Nathan, DELEUZE-DORDRON Axel, DUPERIER-CATALAZ Mathis, SPINNLER Paul, TIDJANI Manyl"
 date: '2025-04-15'
 output:
-  pdf_document:
+  html_document:
     latex_engine: xelatex
     toc: true
     toc_depth: 3
@@ -15,13 +15,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r echo=FALSE, include=FALSE}
 library(tidyverse)
+library(kableExtra)
 options(tibble.print_max = Inf)
 ```
 
 ```{r echo=FALSE, include=FALSE}
-daily_count <- read_delim("./OryxData/daily_count.csv", delim=",")
 totals_by_type <- read.delim("./OryxData/totals_by_type.csv",sep = ",")
 totals_by_system <- read.delim("./OryxData/totals_by_system.csv",sep = ",")
+all_vehicles <- totals_by_system
 ```
 
 # Introduction
@@ -47,43 +48,92 @@ De ces tables en résulte d'autres aggrégats, seule une nous sera utile ici:
 
 **totals_by_type.csv** : Agrège les pertes totales par pays et par type d’équipement.
 
-Les données sont conservatrices par nature, car seules les pertes confirmées visuellement sont comptabilisées, ce qui sous-estime probablement les pertes réelles. Toutefois, cette rigueur méthodologique garantit un niveau de fiabilité élevé sur les données recensées.
+Les données présentent des limitations: elles sont conservatrices par nature, car seules les pertes confirmées visuellement sont comptabilisées, ce qui sous-estime probablement les pertes réelles. Toutefois, cette rigueur méthodologique garantit un niveau de fiabilité élevé sur les données recensées. Elles sont issues d’images ou vidéos, le plus souvent prises par drone, postées publiquement sur des réseaux sociaux tels que X (anciennement Twitter) ou Telegram, puis analysées par des passionnés d’OSINT (Open Source INTelligence). Leur travail est d’excellente qualité, suffisamment pour être reconnu comme tel par David Howell Petraeus, ancien général américain et directeur de la CIA sous la première administration Obama, ou être cité dans des grands médias comme Reuters ou la BBC. De part la méthodologie d’Oryx, seules les pertes ayant une preuve visuelle sont comptabilisées.
 
 ## Objectif de l'étude
 
-Cette étude vise à analyser l’évolution des pertes de chars d’assaut au cours du conflit russo-ukrainien. En particulier, elle cherche à mettre en évidence les tendances temporelles de ces pertes et à les corréler avec des événements marquants du conflit (offensives majeures, contre-attaques, annonces stratégiques, etc.).
-
-L’objectif final est de mieux comprendre comment la dynamique du champ de bataille — en termes de pertes matérielles — reflète ou réagit aux évolutions stratégiques et tactiques du conflit.
+Cette étude vise à analyser l’évolution des pertes de chars d’assaut au cours du conflit russo-ukrainien. En particulier, elle cherche à mettre en évidence les tendances temporelles de ces pertes et à les corréler avec des événements historiques autour du conflit (offensives majeures, contre-attaques, annonces stratégiques, fabrication des chars d'assaut,etc.).
 
 # Méthodologie
 
 ## Procédures de nettoyage des données
 
-Il arrive que la colonne 'equipement_type' prenne une de ces valeurs:
-
-- "Losses excluding Recon Drones and Trucks - [NOMBRE], of which: destroyed: [NOMBRE], damaged: [NOMBRE], abandoned: [NOMBRE], captured: [NOMBRE]",
-- "Losses of Armoured Combat Vehicles [Tanks, AFVs, IFVs, APCs, and MRAPs] - [NOMBRE], of which: destroyed: [NOMBRE], damaged: [NOMBRE], abandoned: [NOMBRE], captured: [NOMBRE]"
-
-Ces observations synthétiques semblent représenter un cumul global des pertes d’équipements, et sont redondantes avec les totaux calculables à partir des données plus détaillées. Les lignes correspondantes sont retirées.
+Tout d'abord, l'ensemble des pertes visuellement confirmées de MBT (détruits, abandonnés, capturés ou endommagés) par pays entre le 24/02/2022 et le 07/04/2025 dans la guerre Russo-Ukrainienne sont regroupées.
 
 ```{r echo=FALSE}
-daily_count <- daily_count %>%
-   filter(!grepl('Losses', equipment_type))
+total_tank_losses <- totals_by_type %>% 
+  filter(grepl('Tanks', equipment_type)) %>%
+  filter(!grepl('Losses', equipment_type))
+
+# Reformater pour affichage
+formatted_table <- total_tank_losses %>%
+  select(-equipment_type) %>%
+  pivot_longer(
+    cols = -country,
+    names_to = "Status",
+    values_to = "Count"
+  ) %>%
+  pivot_wider(
+    names_from = country,
+    values_from = Count
+  ) %>%
+  relocate(Status)
+
+# Affichage tableau
+formatted_table %>%
+  kable(caption = "Pertes totales de chars par type de statut") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
+Avant d'aller plus loin, il est important de définir ce qu'est un MBT (Main Battle Tank ou char de bataille, communément appelé tank ou char d'assaut). Un MBT est un véhicule lourdement blindé et armé d'un canon principal et d'au moins une mitrailleuse. Son rôle sur le champ de bataille et d'offrir un soutient à l'infanterie en étant le fer de lance lors de assaut pour permettre une percée des lignes de défense ennemies, ainsi que l'exploitation de ces percées, c'est à dire profiter de sa
+mobilité pour prendre de cours les lignes ennemis en les attaquants par les flancs ou par l'arrière ou encore en perturbant les lignes d'approvisionnement, pour forcer l'ennemi à abandonner ses positions et reculer. Concrètement cela se traduit par un blindage permettant de faire face à la plupart des armes ennemies, un canon permettant d'engager les autres blindés et les poches de résistance, comme un bunker ou un nid de mitrailleuse et des sous-systèmes d'acquisition d'information et de communication permettant une bonne coopération avec les forces alliées au travers d'une bonne conscience situationnelle.
 
-Depuis la table 'totals_by_system' sont sélectionnés les chars préfixé par "T-[5-9]" ou "PT-91". 
+Il a été décidé de répartir les différents modèles de MBT en fonction de leur niveau de modernité dans quatre catégories (colonne age): 
 
-Découpage en sous tables des MBT de la série T (conception soviétique) en fonction des grandes familles de modèles :
-T-50 : reliques du passé
-T-60 : obsolètes
-T-72 : tables à redécouper en fonction du niveau de modernisation
-  Note : les PT-91 sont une variante modernisée polonaise du T72, d'où leur inclusion
-T-80 : tables à redécouper en fonction du niveau de modernisation
-T-90 : tables à redécouper en fonction du niveau de modernisation
+- **obsolete** : le modèle ne peut pas remplir son rôle. Cela peut s'expliquer par un blindage ou un armement peu efficace ou un manque de sous-systèmes modernes (optiques thermiques commandant et tireur de deuxième génération ou plus, conduite de tir automatisée, commandes tireurs dédoublées pour le commandant de char, DAL (Détecteur d'Alerte Laser), ...) 
+
+- **old** : le modèle peine à remplir son rôle. Cela vient de sous-systèmes datés et donc moins performant, voir du manque de certains sous-systèmes aujourd'hui jugé critique. Ca se traduit le plus souvent par un manque de conscience situationnelle. 
+
+- **modern** : le modèle remplit correctement son rôle. Il jouit de sous-systèmes modernes voir dernière génération tels que des optiques thermiques de troisième génération pour le commandant et le tireur. 
+
+- **unknown** : l'identification n'est pas assez précise pour déterminer le modèle exacte.
+
+Une autre catégorisation qui est déjà faite par le jeu de donnée est le __"status"__. Puisqu'il n'est question ici que de pertes avec une preuve visuelle et que toutes les pertes ne se valent pas, le matériel est classé dans l'une des quatres catégories suivantes :
+
+- **captured** : l'équipement a été récupéré par le camp adverse
+![*T72B3 capturé*](ressources/MBT_captured.jpg)
+
+
+- **abandonned** : montre des signes d'abandons, souvent en combinaison avec des dégâts. L'équipement abandonné dans une zone sûre controlée par seulement l'un des deux camps ne figure pas dans ce jeu de donnés.
+![*T72B3 abandonné*](ressources/MBT_abandonned.jpg)
+
+
+- **damaged** : l'équipement a été endommagé au delà de ce qui est rapidement / facilement réparable
+![*T72B3 endommagé*](ressources/MBT_damaged.jpg)
+
+
+- **destroyed** : l'équipement est détruit à tel point qu'il n'est pas réparable, ou du moins pas d'une façon économiquement viable, autrement dit il est moins cher d'en reconstruire un neuf du même modèle ou d'en réactiver un, en fonction de si il s'agit d'un modèle encore en production ou issu des stocks légués par l'URSS.
+![*T72B3 détruit*](ressources/MBT_destroyed.jpg)
+
+
+Découpage en sous tables des MBT de la série T (conception soviétique)
+en fonction des grandes familles de modèles :
+
+- **T-50 (T-54, T55)**: reliques du passé, conception du début des années 50
+
+- **T-60 (T-62, T-64)**: obsolètes, conception du début des années 60
+
+- **T-72** : table redécoupée plus loin en fonction du niveau de sa génération, conception de la fin des années 60
+
+    -   Note : les PT-91 sont une variante modernisée polonaise du T72,
+        d'où leur inclusion ci-dessous
+
+- **T-80** : table redécoupée plus loin en fonction du niveau sa génération, conception repartant de la base du T-60 datant de la fin des années 70
+
+- **T-90** : table redécoupée plus loin en fonction du niveau sa génération, conception repartant de la base du T-72 et incorporant des sous-systèmes du T-80 datant de la fin des années 80, tous les modèles ont été construit après la dissolution de l'URSS en 1991.
 
 ```{r echo=FALSE}
-all_Tseries_without_battalion_number <- totals_by_system %>%
+all_Tseries_without_battalion_number <- all_vehicles %>%
   mutate(system = sub("[0-9]*", "", system)) %>%
   filter(grepl('T-[5-9]|PT-91', system)) 
 
@@ -111,18 +161,11 @@ T90_tanks <- all_Tseries_without_battalion_number %>%
   filter(grepl('T-90', system)) %>%
   mutate(system_family = 'T-90 serie') %>%
   mutate(age = 'old')
-
-# all_Tseries_without_battalion_number
-# T50_tanks
-# T60_tanks
-# T72_tanks
-# T80_tanks
-# T90_tanks
 ```
 
-Découpage en sous tables des modèles de la famille des T72
+Découpage en sous tables des modèles de la famille des T72 :
 
-```{r echo=FALSE}
+```{r}
 T72_obsolete <- T72_tanks %>%
   filter(grepl('A|B|Ural|T-72', system)) %>%
   filter(!grepl('Obr.|2022|B3|EA', system))
@@ -139,16 +182,11 @@ T72_modern <- T72_tanks %>%
 T72_unknown <- T72_tanks %>%
   filter(grepl('Unknown', system)) %>%
   mutate(age = 'unknown')
-
-# T72_obsolete
-# T72_old
-# T72_modern
-# T72_unknown
 ```
 
-Découpage en sous tables des modèles de la famille des T80
+Découpage en sous tables des modèles de la famille des T80:
 
-```{r echo=FALSE}
+```{r echo}
 T80_old <- T80_tanks %>%
   filter(grepl('B|U', system)) %>%
   filter(!grepl('BVM|2022|UD', system))
@@ -160,15 +198,11 @@ T80_modern <- T80_tanks %>%
 T80_unknown <- T80_tanks %>%
   filter(grepl('Unknown', system)) %>%
   mutate(age = 'unknown')
-
-# T80_old
-# T80_modern
-# T80_unknown
 ```
 
-Découpage en sous tables des modèles de la famille des T90
+Découpage en sous tables des modèles de la famille des T90:
 
-```{r echo=FALSE}
+```{r echo}
 T90_old <- T90_tanks %>%
   filter(grepl('A|S', system))
 
@@ -179,15 +213,11 @@ T90_modern <- T90_tanks %>%
 T90_unknown <- T90_tanks %>%
   filter(grepl('Unknown', system)) %>%
   mutate(age = 'unknown')
-
-# T90_old
-# T90_modern
-# T90_unknown
 ```
 
 Table contenant tous les MBT qui ne sont pas de la série T (conception OTAN)
 
-```{r echo=FALSE}
+```{r echo}
 all_NATO_without_battalion_number <- totals_by_system %>%
   mutate(system = sub("[0-9]*", "", system)) %>%
   filter(!grepl('Russia|Soviet Union', origin)) %>%
@@ -202,13 +232,70 @@ NATO_MBT_old <- all_NATO_without_battalion_number %>%
 
 NATO_MBT_modern <- all_NATO_without_battalion_number %>%
   filter(!grepl('Leopard 1', system))
-
-# all_NATO_without_battalion_number
-# NATO_MBT_old
-# NATO_MBT_modern
 ```
 
-Table rassemblant les systèmes par grandes familles
+
+1. Évolution temporelle des pertes par grande famille (serie T vs OTAN)
+But : Voir si certaines séries (T-72, T-80, T-90, OTAN) ont connu des pics de pertes à des moments clés du conflit.
+
+```{r echo=FALSE}
+# 1) Calculer les pertes journalières totales par famille, par pays
+time_series <- all_MBTs %>%
+  mutate(date_recorded = as.Date(date_recorded)) %>%
+  group_by(country, system_family, date_recorded) %>%
+  summarise(pertes = n(), .groups = "drop") %>%
+  arrange(country, system_family, date_recorded) %>%
+  group_by(country, system_family) %>%
+  mutate(cum_pertes = cumsum(pertes)) %>%
+  ungroup()
+
+# 2) Filtrer les données de la Russie
+rus_time_series <- time_series %>%
+  filter(country == "Russia")
+
+# 3) Filtrer les données de l'Ukraine
+ukr_time_series <- time_series %>%
+  filter(country == "Ukraine")
+
+# 4) Définir une palette cohérente
+famille_couleurs <- c(
+  "T-50 serie" = "#1f77b4",
+  "T-60 serie" = "#ff7f0e",
+  "T-72 serie" = "#2ca02c",
+  "T-80 serie" = "#d62728",
+  "T-90 serie" = "#9467bd",
+  "NATO" = "#F0E442"
+)
+
+# 5) Graphique pour la Russie
+ggplot(rus_time_series, aes(x = date_recorded, y = cum_pertes, color = system_family)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = famille_couleurs) +
+  labs(
+    title = "Pertes cumulées des chars russes par famille (2022–2024)",
+    x = "Date",
+    y = "Pertes cumulées",
+    color = "Famille"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# 6) Graphique pour l'Ukraine
+ggplot(ukr_time_series, aes(x = date_recorded, y = cum_pertes, color = system_family)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = famille_couleurs) +
+  labs(
+    title = "Pertes cumulées des chars ukrainiens par famille (2022–2024)",
+    x = "Date",
+    y = "Pertes cumulées",
+    color = "Famille"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+__Analyse:__
+ Au début du conflit, une grande quantité de T-72 est déployée, étant donné le stock emmagasiné entre les années 1967-1973. Le fait que le T-72, un char très répandu dans l'inventaire russe, ait subi des pertes importantes dès les premières semaines a également eu une signification particulière. Cela laissait présager le rôle essentiel que les vastes stocks de l'ère soviétique joueraient pour soutenir le conflit, car la flotte opérationnelle moderne de la Russie s'est avérée insuffisante et très vulnérable. Les pertes précoces de ce modèle spécifique suggéraient que la Russie puisait massivement dans ses réserves plus anciennes et moins capables beaucoup plus tôt que prévu, orientant le conflit vers une nature plus longue et plus coûteuse. La phase initiale de l'invasion a été marquée par des tentatives russes d'avancées rapides, de longs convois et des efforts pour s'emparer rapidement de villes et d'infrastructures clés. Cela a conduit à de nombreuses confrontations dans des environnements variés : champs ouverts, routes, zones urbaines et suburbaines.
+Les pertes élevées précoces des T-72 ont servi d'indicateur précoce et sévère que l'armée russe, malgré sa taille et le nombre de ses équipements, n'était pas préparée à un conflit de haute intensité, contesté technologiquement, contre un adversaire déterminé et bien équipé. De nombreux chars issus du stockage étaient en mauvais état, nécessitant des réparations importantes ou n'étant utilisables que pour des pièces détachées. Les variantes plus anciennes manquaient des systèmes de protection et de conduite de tir les plus récents, ce qui en faisait des cibles plus faciles. Les pannes mécaniques dues à l'âge et à un mauvais entretien ont probablement entraîné l'abandon de véhicules, qui ont ensuite été capturés ou détruits. Les forces russes n'ont pas réussi à supprimer efficacement les équipes antichars et les opérateurs de drones ukrainiens. 
 
 ```{r echo=FALSE}
 all_MBTs <- NATO_MBT_modern %>%
@@ -226,6 +313,9 @@ all_MBTs <- NATO_MBT_modern %>%
   union(T80_unknown) %>%
   union(T90_unknown)
 
+all_MBTs$status <- factor(all_MBTs$status, levels = c("captured", "abandoned", "damaged", "destroyed"))
+all_MBTs$age <- factor(all_MBTs$age, levels = c("modern", "old", "obsolete", "unknown"))
+
 totals_by_family <- all_MBTs %>%
   ggplot() +
   geom_bar(mapping = aes(x=system_family, fill = country), stat = "count", width = 0.5)
@@ -234,56 +324,39 @@ totals_by_age <- all_MBTs %>%
   ggplot() +
   geom_bar(mapping = aes(x=age, fill = country), stat = "count", width = 0.5) 
 
-# all_MBTs
-totals_by_family
-totals_by_age
+totals_by_age_proportion <- all_MBTs %>%
+  ggplot(aes(age, fill = country)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(name = "percent",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = scales::percent_format())
+
+totals_by_country_by_age <- all_MBTs %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=country, fill = age), stat = "count", width = 0.90) +
+  scale_fill_manual(
+    values = c("modern" = "#4fc3f7", "old" = "#ba68c8", "obsolete" = "#d32f2f", "unknown" = "#A0A0A0"),
+    breaks = c("modern", "old", "obsolete", "unknown"),
+    name = "Age Category"
+  )
+
+totals_by_country_by_age_proportion <- all_MBTs %>%
+  ggplot(aes(country, fill = age)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(name = "percent",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = scales::percent_format()) +
+  scale_fill_manual(
+    values = c("modern" = "#4fc3f7", "old" = "#ba68c8", "obsolete" = "#d32f2f", "unknown" = "#A0A0A0"),
+    breaks = c("modern", "old", "obsolete", "unknown"),
+    name = "Age Category"
+  )
+
+totals_by_country_by_age
+totals_by_country_by_age_proportion
 ```
 
-
-1. Évolution temporelle des pertes par grande famille (serie T vs OTAN)
-But : Voir si certaines séries (T-72, T-80, T-90, OTAN) ont connu des pics de pertes à des moments clés du conflit.
-
-```{r echo=FALSE}
-# 2) Calculer les pertes journalières totales par famille, par pays
-time_series <- all_MBTs %>%
-  mutate(date_recorded = as.Date(date_recorded)) %>%
-  group_by(country, system_family, date_recorded) %>%
-  summarise(pertes = n(), .groups = "drop") %>%
-  arrange(country, system_family, date_recorded) %>%
-  group_by(country, system_family) %>%
-  mutate(cum_pertes = cumsum(pertes)) %>%
-  ungroup()
-
-# 3) Tracer l’évolution cumulée
-ggplot(time_series, aes(x = date_recorded, y = cum_pertes, color = system_family)) +
-  geom_line(linewidth = 1) +
-  facet_wrap(~country, ncol = 1) +
-  labs(
-    title = "Évolution cumulée des pertes de chars par famille (2022–2024)",
-    x = "Date",
-    y = "Pertes cumulées",
-    color = "Famille de chars"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
-
-2. Répartition des âges / générations de chars perdus
-But : Comparer la vulnérabilité des chars « obsolètes » vs « modernes ».
-
-```{r echo=FALSE}
-ggplot(all_MBTs, aes(x = age, fill = country)) +
-  geom_bar(position = "stack") +
-  labs(
-    title = "Distribution par âge des chars perdus (familles T et OTAN)",
-    x = "Âge / génération du char",
-    y = "Nombre de pertes",
-    fill = "Camp"
-  ) +
-  theme_minimal()
-```
-
-3. Parts relatives des statuts de perte (destroyed/damaged/abandoned/captured)
+2. Parts relatives des statuts de perte (destroyed/damaged/abandoned/captured)
 But : Voir comment se répartissent les statuts pour les chars (par pays ou par famille).
 
 ```{r echo=FALSE}
@@ -326,27 +399,6 @@ ggplot(status_breakdown, aes(x = 1, y = pct, fill = status)) +
   )
 ```
 
-4. Comparaison OTAN vs série T
-But : Savoir si les chars OTAN (Abrams, Leopard, Challenger…) ont été plus ou moins touchés que les T-series.
-
-```{r echo=FALSE}
-comparaison <- all_MBTs %>%
-  group_by(country, system_family) %>%
-  summarise(pertes = n(), .groups = "drop")
-
-ggplot(comparaison, aes(x = system_family, y = pertes, fill = country)) +
-  geom_col(position = "dodge") +
-  labs(
-    title = "Comparaison des pertes de chars OTAN vs T-series",
-    x = "Famille de chars",
-    y = "Nombre de pertes",
-    fill = "Camp"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-
 
 ```{r echo=FALSE}
 total_tank_losses <- totals_by_type %>% 
@@ -376,9 +428,7 @@ total_abandoned_per_nation <- totals_by_system %>%
   dplyr::filter(grepl(' T-', system)) %>%
   dplyr::filter(grepl('abandoned', status)) %>%
   group_by(country)
-```
 
-```{r echo=FALSE}
 # Fusion des totaux par état
 df_tank_losses <- bind_rows(
   total_destroyed_per_nation %>% summarise(total = n()) %>% mutate(type = "Destroyed"),
@@ -437,19 +487,100 @@ distribution_losses_per_age_and_per_month
 
 Graphiques de la distribution des types de pertes visuellement confirmées par mois
 
-```{r echo=FALSE}
+```{r fig.align="center", fig.width = 10}
 distribution_losses_by_status_per_month <- all_MBTs_losses_per_month %>%
   ggplot(aes(date_recorded, fill = status)) +
-  geom_bar(position = "fill") +
+  geom_bar(position = "fill", width = 0.65) +
   scale_y_continuous(name = "percent",
-                     breaks = c(0, 0.25, 0.5, 0.75, 1), 
-                     labels = scales::percent(c(0, 0.25, 0.5, 0.75, 1)))
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = scales::percent_format()) +
+  scale_fill_manual(
+    values = c("captured" = "#3f1fb9", "abandoned" = "#4fc3f7", "damaged" = "#ba68c8", "destroyed" = "#d32f2f"),
+    breaks = c("captured", "abandoned", "damaged", "destroyed"),
+    name = "Status"
+  ) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 distribution_losses_by_status_per_month
 ```
+Une hypothèse que nous pouvons raisonnablement proposer est que le niveau de modernité des MBT à une influence sur les pertes.
 
+Graphiques des totaux de pertes par catégorie d'âge et de la distribution des types de pertes visuellement confirmées en fonction de la catégorie d'âge
+
+```{r}
+totals_losses_by_age <- all_MBTs %>%
+  ggplot() +
+  geom_bar(mapping = aes(x=age), stat = "count", width = 0.5)+theme_minimal()
+
+distribution_losses_by_age_and_by_status <- all_MBTs %>%
+  ggplot(aes(age, fill = status)) +
+  geom_bar(position = "fill", width = 0.65) +
+  scale_y_continuous(name = "percent",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = scales::percent_format()) +
+  scale_fill_manual(
+    values = c("captured" = "#3f1fb9", "abandoned" = "#4fc3f7", "damaged" = "#ba68c8", "destroyed" = "#d32f2f"),
+    breaks = c("captured", "abandoned", "damaged", "destroyed"),
+    name = "Status"
+  ) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+distribution_losses_by_age_and_by_status2 <- all_MBTs %>%
+  group_by(age) %>%
+  count(status) %>%
+  mutate(percent = n/sum(n)) %>% 
+  select(-n) %>%
+  ggplot(aes(x=status, fill=age, y=percent))+
+  geom_col() + 
+  facet_grid(~age) +
+  coord_cartesian(ylim = c(0,1)) +
+  scale_y_continuous(name = "percent",
+                     breaks = seq(0, 1, by = 0.1),
+                     labels = scales::percent_format()) +
+  xlab("Status") +
+  ggtitle("Distribution of reported status for each MBT generation") +
+  scale_fill_manual(
+    values = c("modern" = "#3f1fb9", "old" = "#4fc3f7", "obsolete" = "#ba68c8", "unknown" = "#d32f2f"),
+    breaks = c("modern", "old", "obsolete", "unknown"),
+    name = "Generation"
+  ) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+totals_losses_by_age
+distribution_losses_by_age_and_by_status
+distribution_losses_by_age_and_by_status2
+
+```
+(Bonus). Comparaison OTAN vs série T
+But : Savoir si les chars OTAN (Abrams, Leopard, Challenger…) ont été plus ou moins touchés que les T-series.
+
+```{r echo=FALSE}
+comparaison <- all_MBTs %>%
+  group_by(country, system_family) %>%
+  summarise(pertes = n(), .groups = "drop")
+
+ggplot(comparaison, aes(x = system_family, y = pertes, fill = country)) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Comparaison des pertes de chars OTAN vs T-series",
+    x = "Famille de chars",
+    y = "Nombre de pertes",
+    fill = "Camp"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
 
 # Conclusion
 
 # References
 **lien du dépôt GitHub:** https://github.com/scarnecchia/oryx_data
+**Méthodologie Oryx:** <https://x.com/Rebel44CZ/status/1878490738243068330>
+**Le Council on Foreign Relations:** https://www.cfr.org/global-conflict-tracker/conflict/conflict-ukraine
+https://www.thefivecoatconsultinggroup.com/the-coronavirus-crisis/ukraine-context-d47
+**hypothèses d'avant-guerre sur l'efficacité militaire russe et les capacités défensives ukrainiennes**:https://www.thefivecoatconsultinggroup.com/the-coronavirus-crisis/ukraine-context-d47
+https://kyivindependent.com/as-russian-tank-losses-in-ukraine-continue-to-mount-heres-what-you-need-to-know/
+
+**Why have Russian tanks struggled in Ukraine?**: https://www.iwm.org.uk/history/why-have-russian-tanks-struggled-in-ukraine
+**Russia’s T-72 Tank Is Getting Blown To Pieces in Ukraine**: https://nationalinterest.org/blog/buzz/russias-t-72-tank-getting-blown-pieces-ukraine-211292
