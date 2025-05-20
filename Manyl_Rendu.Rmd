@@ -1,5 +1,5 @@
 ---
-title: "Rendu Charlatans"
+title: "projet_MSPL_COLOMBAN_DELEUZE-DORDRON_DUPERIER-CATALAZ_SPINNLER_TIDJANI"
 author: "COLOMBAN Nathan, DELEUZE-DORDRON Axel, DUPERIER-CATALAZ Mathis, SPINNLER Paul, TIDJANI Manyl"
 date: '2025-04-15'
 output:
@@ -59,15 +59,12 @@ plus efficaces et respectueuses des droits humains.
 Le jeu de données utilisé dans cette étude est directement issu de ces inventaires rigoureux. Il se
 compose de 2 tables principales :
 
-**daily_count.csv** : Fournit une comptabilisation quotidienne des pertes d’équipements selon leur
-type (char, avion, etc.) et leur statut (détruit, abandonné, capturé, endommagé).
+**daily_count.csv** : Fournit une comptabilisation quotidienne des pertes d’équipements selon leur type (char, avion, etc.) et leur statut (détruit, abandonné, capturé, endommagé).
 
 **total_by_system.csv** : Détaille chaque observation individuelle d’équipement perdu, avec son pays
 d’origine, son statut, et un lien vers la preuve visuelle.
 
-De ces tables en résulte d'autres aggrégats, seule une nous sera utile ici:
-
-**totals_by_type.csv** : Agrège les pertes totales par pays et par type d’équipement.
+Elles nous permettent d'extraire avec précision les tanks recherchés par leurs intitulés, et ainsi générer différents graphiques qui sépare les valeurs possibles des données en classes (intervalle de valeurs prises par un caractère quantitatif) ou groupes.
 
 ### Limites du jeu de données
 
@@ -123,7 +120,7 @@ ou endommagés) par pays entre le 24/02/2022 et le 07/04/2025 dans la guerre Rus
 regroupé. Cela permet par la suite de nous assurer de la cohérence de nos calculs et observations
 futurs.
 
-```{r echo=FALSE}
+```{r}
 total_tank_losses <- totals_by_type %>% 
   filter(grepl('Tanks', equipment_type)) %>%
   filter(!grepl('Losses', equipment_type))
@@ -147,6 +144,8 @@ formatted_table %>%
   kable(caption = "Pertes totales de chars par type de statut") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
+
+Les pertes visuellement confirmées, ont montré un ratio de pertes de chars russes par rapport aux pertes ukrainiennes qui s'est maintenu au-dessus de 3 pour 1 pendant une grande partie du conflit.
 
 Il a été décidé de répartir les différents modèles de MBT en fonction de leur niveau de modernité,
 et par conséquent leur capacité à remplir le rôle qui leur incombe, dans quatre catégories (colonne
@@ -296,7 +295,7 @@ All_T72 <- T72_obsolete %>%
 
 Découpage en sous tables des modèles de la famille des T80:
 
-```{r echo}
+```{r}
 T80_old <- T80_tanks %>%
   filter(grepl('B|U', system)) %>%
   filter(!grepl('BVM|2022|UD|Unknown', system))
@@ -316,7 +315,7 @@ all_T80 <- T80_old %>%
 
 Découpage en sous tables des modèles de la famille des T90:
 
-```{r echo}
+```{r}
 T90_old <- T90_tanks %>%
   filter(grepl('A|S', system))
 
@@ -335,7 +334,7 @@ all_T90 <- T90_old %>%
 
 Table contenant tous les MBT qui ne sont pas de la série T (conception OTAN)
 
-```{r echo}
+```{r}
 all_NATO_without_battalion_number <- totals_by_system %>%
   mutate(system = sub("[0-9]*", "", system)) %>%
   filter(!grepl('Russia|Soviet Union', origin)) %>%
@@ -369,11 +368,26 @@ all_MBTs$status <- factor(all_MBTs$status, levels = c("captured", "abandoned", "
 all_MBTs$age <- factor(all_MBTs$age, levels = c("modern", "old", "obsolete", "unknown"))
 ```
 
-1.  Évolution temporelle des pertes par grande famille Hypothèse : La distribution des pertes en
-    fonction des grandes familles de MBT n'est pas uniforme et a évolué pendant le conflit.
+1.  Évolution temporelle des pertes par grande famille 
+    Hypothèse : La distribution des pertes en fonction des grandes familles de MBT n'est pas uniforme et a évolué pendant le conflit.
 
 ```{r echo=FALSE}
 # 1) Calculer les pertes journalières totales par famille, par pays
+all_MBTs <- NATO_MBT_modern %>%
+  union(T72_modern) %>%
+  union(T80_modern) %>%
+  union(T90_modern) %>%
+  union(NATO_MBT_old) %>%
+  union(T72_old) %>%
+  union(T80_old) %>%
+  union(T90_old) %>%
+  union(T50_tanks) %>%
+  union(T60_tanks) %>%
+  union(T72_obsolete) %>%
+  union(T72_unknown) %>%
+  union(T80_unknown) %>%
+  union(T90_unknown)
+
 time_series <- all_MBTs %>%
   mutate(date_recorded = as.Date(date_recorded)) %>%
   group_by(country, system_family, date_recorded) %>%
@@ -406,7 +420,7 @@ ggplot(rus_time_series, aes(x = date_recorded, y = cum_pertes, color = system_fa
   geom_line(linewidth = 1) +
   scale_color_manual(values = famille_couleurs) +
   labs(
-    title = "Pertes cumulées des chars russes par famille (2022–2024)",
+    title = "Tendance des pertes cumulées des chars russes par famille (2022–2024)",
     x = "Date",
     y = "Pertes cumulées",
     color = "Famille"
@@ -419,7 +433,7 @@ ggplot(ukr_time_series, aes(x = date_recorded, y = cum_pertes, color = system_fa
   geom_line(linewidth = 1) +
   scale_color_manual(values = famille_couleurs) +
   labs(
-    title = "Pertes cumulées des chars ukrainiens par famille (2022–2024)",
+    title = "Tendance des pertes cumulées des chars ukrainiens par famille (2022–2024)",
     x = "Date",
     y = "Pertes cumulées",
     color = "Famille"
@@ -450,6 +464,20 @@ mauvais entretien peuvent entraîner l'abandon des véhicules, qui sont le plus 
 détruits par la suite. On voit que la tendance change à la fin de l'année 2022, le conflit
 commençant à stagner. Dès lors les pertes augmentent de façon à peu près constante, témoignant de
 l'installation d'une guerre de position.
+La contre-offensive ukrainienne a officiellement débuté début juin 2023, après des mois de 
+préparation. Ses objectifs principaux étaient de percer les lignes défensives russes, en particulier 
+dans le sud (Oblasts de Zaporijjia et de Donetsk), visant des localités stratégiques comme Melitopol 
+et Berdiansk afin de couper le pont terrestre de la Russie vers la Crimée.
+
+Les alliés occidentaux se sont engagés à fournir une gamme de MBT modernes, notamment des Leopard 2 
+allemands, des Challenger 2 britanniques et des M1 Abrams américains. Les promesses et les livraisons 
+étaient en cours avant et pendant la mi-2023. En janvier 2023, plus de 300 chars occidentaux avaient 
+été promis. Les chiffres spécifiques livrés à la mi-2023 comprenaient des lots de Leopard 2A4 et 2A6 
+de divers partenaires européens, et des Challenger 2 du Royaume-Uni. Les chars Abrams étaient attendus 
+pour l'automne 2023, avec des livraisons de la variante M1A1 accélérées. Les premiers chars Leopard 2 
+sont arrivés en Ukraine vers février/mars 2023, les Challenger 2 arrivant également fin mars 2023. Cela 
+signifie que ces équipements ont été intégrés aux forces ukrainiennes dans les mois précédant et pendant 
+la phase initiale de la contre-offensive.
 
 \*L'armée ukrainienne était en 2022 en cours de modernisation, en réaction à l'annexion de la Crimée
 et aux soulèvements dans le Donbass en 2014. Elle avait notamment acheté du matériel anti-char
@@ -465,13 +493,6 @@ totals_by_family <- all_MBTs %>%
 totals_by_age <- all_MBTs %>%
   ggplot() +
   geom_bar(mapping = aes(x=age, fill = country), stat = "count", width = 0.5) 
-
-totals_by_age_proportion <- all_MBTs %>%
-  ggplot(aes(age, fill = country)) +
-  geom_bar(position = "fill") +
-  scale_y_continuous(name = "percent",
-                     breaks = seq(0, 1, by = 0.1),
-                     labels = scales::percent_format())
 
 totals_by_country_by_age <- all_MBTs %>%
   ggplot() +
@@ -503,30 +524,29 @@ totals_by_country_by_age_proportion
     famille).
 
 ```{r}
-# 1. Préparer le breakdown par status
+# 1. Préparer le découpage par status
 status_breakdown <- all_MBTs %>%
   group_by(country, status) %>%
   summarise(count = n(), .groups = "drop") %>%
-  # 2. Forcer la présence de tous les status pour chaque pays
   complete(country, status, fill = list(count = 0)) %>%
   group_by(country) %>%
-  # 3. Calculer la part en pourcentage
+  # 2. Calculer la part en pourcentage
   mutate(
     total_country = sum(count),
     pct = if_else(total_country > 0, count / total_country, 0),
     label = if_else(
       pct > 0,
       paste0(round(pct * 100, 1), "%"),
-      ""                    # pas d'étiquette si 0%
+      ""                    
     )
   ) %>%
   ungroup()
 
-# 4. Tracer les camemberts
+# 3. Tracer les camemberts
 ggplot(status_breakdown, aes(x = 1, y = pct, fill = status)) +
   geom_col(width = 1, color = "white") +
   coord_polar(theta = "y") +
-  # 5. Ajouter les labels de pourcentage centrés dans chaque tranche
+  # 4. Ajouter les labels de pourcentage centrés dans chaque tranche
   geom_text(aes(label = label),
             position = position_stack(vjust = 0.5),
             size = 3, color = "white") +
@@ -541,6 +561,9 @@ ggplot(status_breakdown, aes(x = 1, y = pct, fill = status)) +
     plot.title = element_text(hjust = 0.5)
   )
 ```
+
+__Analyse:__
+TODO Manyl:
 
 ```{r}
 total_tank_losses <- totals_by_type %>% 
@@ -578,15 +601,10 @@ df_tank_losses <- bind_rows(
   total_captured_per_nation %>% summarise(total = n()) %>% mutate(type = "Captured"),
   total_abandoned_per_nation %>% summarise(total = n()) %>% mutate(type = "Abandoned")
 )
-
-ggplot(df_tank_losses, aes(x = country, y = total, fill = type)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Pertes de chars par pays et par état", y = "Nombre de chars", x = "Pays") +
-  theme_minimal()
 ```
 
-3.  Evolution des totaux de pertes sur un laps de temps donné au cours du conflit Hypothèse : Il y a
-    une évolution du nombre de pertes sur une quantité de temps donné au cours du conflit
+3.  Evolution des totaux de pertes sur un laps de temps donné au cours du conflit 
+    Hypothèse : Il y a une évolution du nombre de pertes sur une quantité de temps donné au cours du conflit
 
 Graphiques des pertes visuellement confirmées par mois ou par années et par pays
 
@@ -635,8 +653,16 @@ all_equipment_totals_losses_by_month
 # all_MBTs_losses_per_month
 all_MBTs_losses_per_month_relative
 totals_losses_by_month
-totals_losses_by_year
 ```
+
+__Analyse:__
+
+Nous allons ici nous pencher principalement sur le graphique "Evolution of the number of losses per month", car il permet une analyse plus fine des tendances de la guerre par rapport aux deux autres. On observe ici un motif en vague qui se répète avec plus ou moins d'intensité. Les pics correspondent aux mois durant lesquels ont eu lieu les grandes offensives. Les creux sont des temps de plus faible intensité, qui servent à reconstituer les forces des deux côtés et à préparer la prochaine offensive majeure. On remarque que le premier mois est de loin le plus coûteux pour la Russie, dont les colonnes blindées ne s'attendaient pas à rencontrer une telle résistance. A l'inverse, le mois de mars 2024 est étonnamment calme. Ce mois a été particulièrement boueux, freinant les mouvements à toutes les échelles. De plus le mois précedant a été meurtrier, impliquant un temps de reconstitution des forces. Le mois d'après enregistre quant à lui le deuxième record de pertes mensuelles, ce qui signifie que le mois de mars a également été un mois de préparation pour d'intenses assauts. Ces assauts ayant pris place en avril et se prolongeant jusqu'à début mai sont en parti expliqués par le désir du Kremlin de pouvoir afficher des victoires lors de son défilé militaire annuel du 9 mai, à des fins de propagandes internes et externes.
+Exception fait des mois d'avril et mai 2024, on voit deux tendances se dessiner au fil du temps. Une première phase de guerre de mouvement s'étalant sur la majorité de l'année 2022, où les deux armées cherchaient à prendre l'initiative, au prix de lourdes pertes. Puis on observe une diminution suivi d'une stagnation du nombre de pertes par mois, indicatif du passage à une guerre de position, où ni la Russie, ni l'Ukraine n'ont réussi à saisir l'initiative. Cela débouche sur un renforcement et une bétonisation des lignes de fronts, rendant les assauts et les avancés de grandes envergures de plus en plus ardus.  Les offensives russes d'avril et mars 2024 ne porteront que de maigres résultats, surtout au vu des quantités de matériel perdu.
+
+Le graphique "Evolution of the repartition of losses per country and per month" permet de déterminer qui était le plus sur l'offensive sur un mois donné. Comme dans toutes les guerres, l'attaquant enregistre proportionnellement aux effectifs de son armée plus de pertes que le défenseur. Ainsi, sur les mois où le total des pertes se partage plus équitablement entre la Russie et l'Ukraine, malgré la différence considérable d'effectifs, on peut en déduire que c'était l'Ukraine qui a mené le plus d'assauts. Cela arrive en juin 2023 par exemple, mois pendant lequel l'Ukraine a lancé une grande contre offensive sur l'ensemble de la ligne de front, principalement dans les oblasts de Donetsk et Zaporijjia.
+
+
 
 **Analyse:**
 
@@ -757,16 +783,29 @@ A l'inverse, le graphique *"Distribution of reported status within losses per mo
 
 
 # References
+**lien du dépôt GitHub:** https://github.com/scarnecchia/oryx_data
 
-**lien du dépôt GitHub:** <https://github.com/scarnecchia/oryx_data> **Méthodologie Oryx:**
-<https://x.com/Rebel44CZ/status/1878490738243068330> **Le Council on Foreign Relations:**
-<https://www.cfr.org/global-conflict-tracker/conflict/conflict-ukraine>
-<https://www.thefivecoatconsultinggroup.com/the-coronavirus-crisis/ukraine-context-d47> **hypothèses
-d'avant-guerre sur l'efficacité militaire russe et les capacités défensives
-ukrainiennes**:<https://www.thefivecoatconsultinggroup.com/the-coronavirus-crisis/ukraine-context-d47>
-<https://kyivindependent.com/as-russian-tank-losses-in-ukraine-continue-to-mount-heres-what-you-need-to-know/>
+**Méthodologie Oryx:** https://x.com/Rebel44CZ/status/1878490738243068330
 
-**Why have Russian tanks struggled in Ukraine?**:
-<https://www.iwm.org.uk/history/why-have-russian-tanks-struggled-in-ukraine> **Russia’s T-72 Tank Is
-Getting Blown To Pieces in Ukraine**:
-<https://nationalinterest.org/blog/buzz/russias-t-72-tank-getting-blown-pieces-ukraine-211292>
+**Le Council on Foreign Relations:** 
+https://www.cfr.org/global-conflict-tracker/conflict/conflict-ukraine
+https://www.thefivecoatconsultinggroup.com/the-coronavirus-crisis/ukraine-context-d47
+
+**hypothèses d'avant-guerre sur l'efficacité militaire russe et les capacités défensives ukrainiennes:**
+https://www.thefivecoatconsultinggroup.com/the-coronavirus-crisis/ukraine-context-d47
+https://kyivindependent.com/as-russian-tank-losses-in-ukraine-continue-to-mount-heres-what-you-need-to-know/
+
+**Why have Russian tanks struggled in Ukraine?:** https://www.iwm.org.uk/history/why-have-russian-tanks-struggled-in-ukraine
+
+**Russia’s T-72 Tank Is Getting Blown To Pieces in Ukraine:** https://nationalinterest.org/blog/buzz/russias-t-72-tank-getting-blown-pieces-ukraine-211292
+
+**https://en.wikipedia.org/wiki/2023_Ukrainian_counteroffensive:** https://en.wikipedia.org/wiki/2023_Ukrainian_counteroffensive
+
+**Tanks of the Ukrainian Army:**
+https://en.wikipedia.org/wiki/Tanks_of_the_Ukrainian_Army
+
+**Russia's war on Ukraine: Western-made tanks for Ukraine:**
+https://www.europarl.europa.eu/RegData/etudes/ATAG/2023/739316/EPRS_ATA(2023)739316_EN.pdf
+
+**How many tanks have Western countries provided to Ukraine?:**
+https://www.army-technology.com/news/how-many-tanks-have-western-countries-provided-to-ukraine/?cf-view
