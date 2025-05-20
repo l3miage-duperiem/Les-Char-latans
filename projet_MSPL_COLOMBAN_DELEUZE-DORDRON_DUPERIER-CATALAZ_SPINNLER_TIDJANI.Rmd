@@ -32,7 +32,7 @@ all_vehicles <- totals_by_system
 
 ## Contexte
 
-Depuis le début de l'invasion de l'Ukraine par la Russie en février 2022, de nombreuses sources tentent de documenter les pertes militaires des deux camps. Parmi elles, le collectif indépendant Oryx propose une base de données visuelle et systématique des équipements militaires perdus. Leur méthodologie repose sur des preuves visuelles publiquement disponibles (photos, vidéos géolocalisées), complétées dans de très rares cas par des confirmations officielles du pays ayant subit la perte.
+Depuis le début de l'invasion de l'Ukraine par la Russie en février 2022, de nombreuses sources tentent de documenter les pertes militaires des deux camps. Parmi elles, le collectif indépendant Oryx propose une base de données visuelle et systématique des équipements militaires perdus. Leur méthodologie repose sur des preuves visuelles publiquement disponibles (photos, vidéos géolocalisées), complétées dans de très rares cas par des confirmations officielles du pays subissant la perte.
 
 Le répertoire Github duquel nous tirons nos données au format CSV est géré par Daniel P. Scarnecchia, chercheur à la Harvard Humanitarian Initiative (HHI). Il dirige les travaux sur les normes et l’éthique au sein du Signal Program on Human Security and Technology. Son domaine
 d'expertise est l'impact de la technologie en contexte de crise, l’éthique de la donnée et les pratiques de recherche fondées sur des preuves réelles dans le secteur humanitaire. Ce répertoire enregistre quasi quotidiennement les mises à jour du site Oryx, qui ne permet hélas pas de récupérer ses données en CSV, d'où le passage par cet intermédiaire.
@@ -49,13 +49,13 @@ Le jeu de données utilisé dans cette étude est directement issu de ces invent
 
 **totals_by_type.csv** : Recense un aggrégat des types d'équipements (char, avions, véhicules d'infanteries, etc.) par pays, toujours avec le statut associé à la perte.
 
-Elles nous permettent d'extraire avec précision les tanks recherchés par leurs intitulés, et ainsi générer différents graphiques qui sépare les valeurs possibles des données en classes (intervalle de valeurs prises par un caractère quantitatif) ou groupes.
+Elles nous permettent d'extraire avec précision les chars recherchés par leurs intitulés, et ainsi générer différents graphiques qui sépare les valeurs possibles des données en classes (intervalle de valeurs prises par un caractère quantitatif) ou groupes.
 
 ### Limites du jeu de données
 
 Les données présentent des limitations: elles sont conservatrices par nature, car seules les pertes confirmées visuellement sont comptabilisées, ce qui sous-estime assurément les pertes réelles, malgré la présence de téléphones portables ou de drones sur le champ de bataille. Toutefois, la rigueur méthodologique d'Oryx garantit un niveau de fiabilité élevé sur les données recensées et l'analyse qui en a été faite. Comme évoqué plus haut, les sources d'Oryx sont des images ou vidéos, le plus souvent prises par drone, postées publiquement sur des réseaux sociaux tels que X (anciennement Twitter) ou Telegram, puis analysées par des passionnés d’OSINT (Open Source INTelligence). Leur travail est d’excellente qualité, suffisamment pour être reconnu comme tel par David Howell Petraeus, ancien général américain et directeur de la CIA sous la première administration Obama, ou être cité dans de grands médias comme Reuters ou la BBC. De par la méthodologie d’Oryx, seules les pertes ayant une preuve visuelle permettant de déterminer qu'elles ont bien eu lieu après le début de l'invasion russe et sur les territoires contestés sont comptabilisées.
 
-Autre aspect important, seules les pertes sont prises en compte et sans contexte cela peut déformer la réalité ou à minima amener à des conclusions éronnées. Bien qu'elles donnent une vague idée des quantités de matériels déployé et de la composition des différentes armées, tout les systèmes d'armes n'ont pas la même vulnérabilité. Cela va dépendre des caractéristiques intrinsèques du matériel, des compétences de son équipage, de son utilisation, des quantités dans lesquels il a été déployé et de tout un tas d'autres facteurs externes. Aussi, il ne faut pas prendre ces données seules comme un reflet du nombre de pièces d'équipement déployées et garder à l'esprit que le matériel obsolète est probablement sur-représenté.
+Autre aspect important, seules les pertes sont prises en compte et sans contexte cela peut déformer la réalité ou à minima amener à des conclusions éronnées. Bien qu'elles donnent une vague idée des quantités de matériel déployées et de la composition des différentes armées, tous les systèmes d'armes n'ont pas la même vulnérabilité. Cela va dépendre des caractéristiques intrinsèques du matériel, des compétences de son équipage, de son utilisation, des quantités dans lesquels il a été déployé et de tout un tas d'autres facteurs externes. Aussi, il ne faut pas prendre ces données seules comme un reflet du nombre de pièces d'équipement déployées et garder à l'esprit que le matériel obsolète est probablement sur-représenté.
 
 ## Objectif de l'étude
 
@@ -69,7 +69,7 @@ contre-attaques, annonces stratégiques, etc).
 Avant d'aller plus loin, il est important de définir ce qu'est un MBT (Main Battle Tank ou char de bataille, communément appelé tank ou char d'assaut). Un MBT est un véhicule lourdement blindé, armé d'un canon principal et d'au moins une mitrailleuse. Son rôle sur le champ de bataille et d'offrir un soutien à l'infanterie en étant le fer de lance lors des assauts pour permettre une percée des lignes de défense ennemies. Il doit également exploiter ces percées, c'est à dire profiter de sa mobilité pour prendre de cours les lignes ennemis en les attaquants par les flancs ou par l'arrière ou encore en perturbant les lignes d'approvisionnement, pour forcer l'ennemi à abandonner ses
 positions et reculer. Concrètement cela se traduit par un blindage permettant de faire face à la plupart des armes ennemies, un canon permettant d'engager les autres blindés et les poches de résistance, comme un bunker ou un nid de mitrailleuse et des sous-systèmes d'acquisition d'information et de communication permettant une bonne coopération avec les forces alliées au travers d'une bonne conscience situationnelle.
 
-Tout d'abord, l'ensemble des pertes visuellement confirmées de MBT (détruits, abandonnés, capturés ou endommagés) par pays entre le 24/02/2022 et le 07/04/2025 dans la guerre Russo-Ukrainienne est regroupé. Cela permet par la suite de nous assurer de la cohérence de nos calculs et observations futurs.
+Tout d'abord, l'ensemble des pertes visuellement confirmées de MBT (détruits, abandonnés, capturés ou endommagés) par pays entre le 24/02/2022 et le 07/04/2025 dans la guerre russo-ukrainienne est regroupé. Cela permet par la suite de nous assurer de la cohérence de nos calculs et observations futurs.
 
 ```{r}
 total_tank_losses <- totals_by_type %>% 
@@ -125,19 +125,19 @@ Une autre catégorisation qui est déjà faite par le jeu de donnée est le **"s
 
     ![*T72B3 capturé*](ressources/MBT_captured.jpg)
 
--   **abandonned** : montre des signes d'abandons, souvent en combinaison avec des dégâts. L'équipement abandonné dans une zone sûre controlée par seulement l'un des deux camps ne figure pas dans ce jeu de donnés.
+-   **abandonned** : montre des signes d'abandon, souvent en combinaison avec des dégâts. L'équipement abandonné dans une zone sûre controlée par seulement l'un des deux camps ne figure pas dans ce jeu de données.
 
     ![*T72B3 abandonné*](ressources/MBT_abandonned.jpg)
 
--   **damaged** : l'équipement a été endommagé au delà de ce qui est rapidement / facilement réparable.
+-   **damaged** : l'équipement a été endommagé au-delà de ce qui est rapidement / facilement réparable.
 
     ![*T72B3 endommagé*](ressources/MBT_damaged.jpg)
 
--   **destroyed** : l'équipement est détruit à tel point qu'il n'est pas réparable, ou du moins pas d'une façon économiquement viable, autrement dit il est moins cher d'en reconstruire un neuf du même modèle ou d'en réactiver un, en fonction de si il s'agit d'un modèle encore en production ou issu des stocks légués par l'URSS.
+-   **destroyed** : l'équipement est détruit à tel point qu'il n'est pas réparable, ou du moins pas d'une façon économiquement viable, autrement dit il est moins cher d'en reconstruire un neuf du même modèle ou d'en réactiver un, en fonction de s'il s'agit d'un modèle encore en production ou issu des stocks légués par l'URSS.
 
     ![*T72B3 détruit*](ressources/MBT_destroyed.jpg)
 
-Découpage en sous tables des MBT de la série T (conception soviétique) en fonction des grandes familles de modèles :
+Découpage en sous-tables des MBT de la série T (conception soviétique) en fonction des grandes familles de modèles :
 
 -   **T-50 (T-54, T55)**: reliques du passé, conception du début des années 50
 
@@ -191,7 +191,7 @@ T90_tanks <- all_Tseries_without_battalion_number %>%
   mutate(age = 'old')
 ```
 
-Découpage en sous tables des modèles de la famille des T72 :
+Découpage en sous-tables des modèles de la famille des T72 :
 
 ```{r}
 T72_obsolete <- T72_tanks %>%
@@ -218,7 +218,7 @@ All_T72 <- T72_obsolete %>%
   union (T72_unknown)
 ```
 
-Découpage en sous tables des modèles de la famille des T80:
+Découpage en sous-tables des modèles de la famille des T80:
 
 ```{r}
 T80_old <- T80_tanks %>%
@@ -238,7 +238,7 @@ all_T80 <- T80_old %>%
   union(T80_unknown)
 ```
 
-Découpage en sous tables des modèles de la famille des T90:
+Découpage en sous-tables des modèles de la famille des T90:
 
 ```{r}
 T90_old <- T90_tanks %>%
@@ -572,7 +572,7 @@ bétonisation des lignes de fronts, rendant les assauts et les avancés de grand
 
 Le graphique "Evolution of the repartition of losses per country and per month" permet de déterminer qui était le plus sur l'offensive sur un mois donné. Comme dans toutes les guerres, l'attaquant enregistre proportionnellement aux effectifs de son armée plus de pertes que le défenseur. Ainsi, sur les mois où le total des pertes se partage plus équitablement entre la Russie et l'Ukraine, malgré la différence considérable d'effectifs, on peut en déduire que c'était l'Ukraine qui a mené le plus d'assauts. Cela arrive en juin 2023 par exemple, mois pendant lequel l'Ukraine a lancé une grande contre offensive sur l'ensemble de la ligne de front, principalement dans les oblasts de Donetsk et Zaporijjia.
 
-4.  Evolution des proportions de générations de MBT et types de perte
+4.  Évolution des proportions de générations de MBT et types de perte
 
     Hypothèse : Il y a une évolution et un lien entre le type de perte et les proportions de chaque génération de MBT.
 
