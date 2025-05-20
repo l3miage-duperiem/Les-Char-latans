@@ -299,20 +299,6 @@ all_MBTs$age <- factor(all_MBTs$age, levels = c("modern", "old", "obsolete", "un
 
 ```{r echo=FALSE}
 # 1) Calculer les pertes journalières totales par famille, par pays
-all_MBTs <- NATO_MBT_modern %>%
-  union(T72_modern) %>%
-  union(T80_modern) %>%
-  union(T90_modern) %>%
-  union(NATO_MBT_old) %>%
-  union(T72_old) %>%
-  union(T80_old) %>%
-  union(T90_old) %>%
-  union(T50_tanks) %>%
-  union(T60_tanks) %>%
-  union(T72_obsolete) %>%
-  union(T72_unknown) %>%
-  union(T80_unknown) %>%
-  union(T90_unknown)
 
 time_series <- all_MBTs %>%
   mutate(date_recorded = as.Date(date_recorded)) %>%
@@ -346,10 +332,10 @@ ggplot(rus_time_series, aes(x = date_recorded, y = cum_pertes, color = system_fa
   geom_line(linewidth = 1) +
   scale_color_manual(values = famille_couleurs) +
   labs(
-    title = "Tendance des pertes cumulées des chars russes par famille (2022–2024)",
+    title = "Cumulative losses of russian MBT per MBT serie since the beginning of the conflit",
     x = "Date",
-    y = "Pertes cumulées",
-    color = "Famille"
+    y = "Cumulative losses",
+    color = "Serie"
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -359,16 +345,18 @@ ggplot(ukr_time_series, aes(x = date_recorded, y = cum_pertes, color = system_fa
   geom_line(linewidth = 1) +
   scale_color_manual(values = famille_couleurs) +
   labs(
-    title = "Tendance des pertes cumulées des chars ukrainiens par famille (2022–2024)",
+    title = "Cumulative losses of ukrainian MBT per MBT serie since the beginning of the conflit",
     x = "Date",
-    y = "Pertes cumulées",
-    color = "Famille"
+    y = "Cumulative losses",
+    color = "Serie"
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-**Analyse:** Au début du conflit, une grande quantité de T-72 est déployée, étant donné le fait qu'il s'agit du principal cheval de bataille de l'armée russe, ce modèle ayant été produit dans d'immenses quantités par l'URSS entre 1973 et 1990. Le fait que le T-72, un char très répandu dans l'inventaire russe, ait subi des pertes importantes dès les premières semaines a également eu une signification particulière. Cela laissait présager le rôle essentiel que les vastes stocks de l'ère soviétique joueraient pour soutenir le conflit, car la flotte opérationnelle moderne de la Russie s'est avérée insuffisante et s'est réduit à un rythme inquiétant. Les pertes précoces de ce modèle suggère que la Russie a sous-estimé la résilience de l'Ukraine, orientant le conflit vers une guerre plus longue et plus coûteuse. La phase initiale de l'invasion a été marquée par des tentatives russes d'avancées rapides, de longs convois et des efforts pour s'emparer rapidement de villes et d'infrastructures clés, qui ont en majorité échoué. Cela a conduit à de nombreuses confrontations dans des environnements variés : champs ouverts, routes, zones urbaines et suburbaines. Les pertes élevées précoces des T-72 ont servi à démontré que l'armée russe, malgré sa taille et le nombre de ses équipements, n'était pas préparée à un conflit de haute intensité, contesté technologiquement, contre un adversaire déterminé et bien équipé\*. De nombreux chars issus des stocks étaient en mauvais état, nécessitant des réparations importantes ou n'étant utilisables que pour des pièces détachées. Les variantes plus anciennes manque des systèmes de protection et de conduite de tir les plus récents, ce qui en fait des cibles plus faciles. Les pannes mécaniques dues à l'âge et à un mauvais entretien peuvent entraîner l'abandon des véhicules, qui sont le plus souvent capturés ou détruits par la suite. On voit que la tendance change à la fin de l'année 2022, le conflit commençant à stagner. Dès lors les pertes augmentent de façon à peu près constante, témoignant de l'installation d'une guerre de position.
+**Analyse:** 
+
+Au début du conflit, une grande quantité de T-72 est déployée, étant donné le fait qu'il s'agit du principal cheval de bataille de l'armée russe, ce modèle ayant été produit dans d'immenses quantités par l'URSS entre 1973 et 1990. Le fait que le T-72, un char très répandu dans l'inventaire russe, ait subi des pertes importantes dès les premières semaines a également eu une signification particulière. Cela laissait présager le rôle essentiel que les vastes stocks de l'ère soviétique joueraient pour soutenir le conflit, car la flotte opérationnelle moderne de la Russie s'est avérée insuffisante et s'est réduit à un rythme inquiétant. Les pertes précoces de ce modèle suggère que la Russie a sous-estimé la résilience de l'Ukraine, orientant le conflit vers une guerre plus longue et plus coûteuse. La phase initiale de l'invasion a été marquée par des tentatives russes d'avancées rapides, de longs convois et des efforts pour s'emparer rapidement de villes et d'infrastructures clés, qui ont en majorité échoué. Cela a conduit à de nombreuses confrontations dans des environnements variés : champs ouverts, routes, zones urbaines et suburbaines. Les pertes élevées précoces des T-72 ont servi à démontré que l'armée russe, malgré sa taille et le nombre de ses équipements, n'était pas préparée à un conflit de haute intensité, contesté technologiquement, contre un adversaire déterminé et bien équipé\*. De nombreux chars issus des stocks étaient en mauvais état, nécessitant des réparations importantes ou n'étant utilisables que pour des pièces détachées. Les variantes plus anciennes manque des systèmes de protection et de conduite de tir les plus récents, ce qui en fait des cibles plus faciles. Les pannes mécaniques dues à l'âge et à un mauvais entretien peuvent entraîner l'abandon des véhicules, qui sont le plus souvent capturés ou détruits par la suite. On voit que la tendance change à la fin de l'année 2022, le conflit commençant à stagner. Dès lors les pertes augmentent de façon à peu près constante, témoignant de l'installation d'une guerre de position.
 La contre-offensive ukrainienne a officiellement débuté début juin 2023, après des mois de préparation. Ses objectifs principaux étaient de percer les lignes défensives russes, en particulier dans le sud (Oblasts de Zaporijjia et de Donetsk), visant des localités stratégiques comme Melitopol et Berdiansk afin de couper le pont terrestre de la Russie vers la Crimée.
 
 Les alliés occidentaux se sont engagés à fournir une gamme de MBT modernes, notamment des Leopard 2 allemands, des Challenger 2 britanniques et des M1 Abrams américains. Les promesses et les livraisons étaient en cours avant et pendant la mi-2023. En janvier 2023, plus de 300 chars occidentaux avaient été promis. Les chiffres spécifiques livrés à la mi-2023 comprenaient des lots de Leopard 2A4 et 2A6 de divers partenaires européens, et des Challenger 2 du Royaume-Uni. Les chars Abrams étaient attendus pour l'automne 2023, avec des livraisons de la variante M1A1 accélérées. Les premiers chars Leopard 2 sont arrivés en Ukraine vers février/mars 2023, les Challenger 2 arrivant également fin mars 2023. Cela signifie que ces équipements ont été intégrés aux forces ukrainiennes dans les mois précédant et pendant la phase initiale de la contre-offensive.
@@ -391,7 +379,10 @@ totals_by_country_by_age <- all_MBTs %>%
     values = c("modern" = "#4fc3f7", "old" = "#ba68c8", "obsolete" = "#d32f2f", "unknown" = "#A0A0A0"),
     breaks = c("modern", "old", "obsolete", "unknown"),
     name = "MBT Generation"
-  )
+  ) + 
+  xlab("Nation") +
+  ylab("Number of visually confirmed losses") +
+  ggtitle("Number of MBT losses per country")
 
 totals_by_country_by_age_proportion <- all_MBTs %>%
   ggplot(aes(country, fill = age)) +
@@ -403,7 +394,10 @@ totals_by_country_by_age_proportion <- all_MBTs %>%
     values = c("modern" = "#4fc3f7", "old" = "#ba68c8", "obsolete" = "#d32f2f", "unknown" = "#A0A0A0"),
     breaks = c("modern", "old", "obsolete", "unknown"),
     name = "MBT Generation"
-  )
+  ) + 
+  xlab("Nation") +
+  ylab("Percentage of all MBT losses") +
+  ggtitle("Distribution of MBT generation per country in the losses")
 
 totals_by_country_by_age
 totals_by_country_by_age_proportion
@@ -442,8 +436,8 @@ ggplot(status_breakdown, aes(x = 1, y = pct, fill = status)) +
             size = 3, color = "white") +
   facet_wrap(~ country) +
   labs(
-    title = "Répartition des statuts de perte pour les chars",
-    fill = "Statut"
+    title = "Distribution of MBT losses status",
+    fill = "Status"
   ) +
   theme_void() +
   theme(
@@ -546,14 +540,17 @@ totals_losses_by_month <- all_MBTs_losses_per_month %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
   xlab("Time (in month)") +
   ylab("Number of visually confirmed losses") +
-  ggtitle("Evolution of the number of losses per month")
+  ggtitle("Evolution of the number of MBT losses per month")
 
 all_equipment_totals_losses_by_month <- all_vehicles %>%
   filter(!grepl('2025-04', date_recorded)) %>%
   mutate(date_recorded = sub('.{3}$','',date_recorded)) %>%
   ggplot() +
   geom_bar(mapping = aes(x=date_recorded, fill = country), stat = "count", width = 0.5) + 
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))#
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  + 
+  xlab("Time (in month)") +
+  ylab("Number of visually confirmed losses") +
+  ggtitle("Evolution of the number of all equipment losses per month")
 
 totals_losses_by_year <- all_MBTs_losses_per_year %>%
   ggplot() +
@@ -566,8 +563,9 @@ totals_losses_by_month
 ```
 __Analyse:__
 
-Nous allons ici nous pencher principalement sur le graphique "Evolution of the number of losses per month", car il permet une analyse plus fine des tendances de la guerre par rapport aux deux autres. On observe ici un motif en vague qui se répète avec plus ou moins d'intensité. Les pics
-correspondent aux mois durant lesquels ont eu lieu les grandes offensives. Les creux sont des temps de plus faible intensité, qui servent à reconstituer les forces des deux côtés et à préparer la prochaine offensive majeure. On remarque que le premier mois est de loin le plus coûteux pour la Russie, dont les colonnes blindées ne s'attendaient pas à rencontrer une telle résistance. A l'inverse, le mois de mars 2024 est étonnamment calme. Ce mois a été particulièrement boueux, freinant les mouvements à toutes les échelles. De plus le mois précedant a été meurtrier, impliquant un temps de reconstitution des forces. Le mois d'après enregistre quant à lui le deuxième record de pertes mensuelles, ce qui signifie que le mois de mars a également été un mois de préparation pour d'intenses assauts. Ces assauts ayant pris place en avril et se prolongeant jusqu'à début mai sont en parti expliqués par le désir du Kremlin de pouvoir afficher des victoires lors de son défilé militaire annuel du 9 mai, à des fins de propagandes internes et externes. Exception fait des mois d'avril et mai 2024, on voit deux tendances se dessiner au fil du temps. Une première phase de guerre de mouvement s'étalant sur la majorité de l'année 2022, où les deux armées cherchaient à prendre l'initiative, au prix de lourdes pertes. Puis on observe une diminution suivi d'une stagnation du nombre de pertes par mois, indicatif du passage à une guerre de position, où ni la Russie, ni l'Ukraine n'ont réussi à saisir l'initiative. Cela débouche sur un renforcement et une
+Fait intéressant, on observe une forte corrélation entre les pertes tout matériel confondu (aviation, blindé, pièce d'artillerie, ...) et les pertes de MBT uniquement. Certaines conclusions de ce projet peuvent donc être raisonnablement élargies à l'ensemble du conflit.
+
+Nous allons ici nous pencher principalement sur le graphique "Evolution of the number of MBT losses per month", car il permet une analyse plus fine des tendances de la guerre par rapport aux deux autres. On observe ici un motif en vague qui se répète avec plus ou moins d'intensité. Les pics correspondent aux mois durant lesquels ont eu lieu les grandes offensives. Les creux sont des temps de plus faible intensité, qui servent à reconstituer les forces des deux côtés et à préparer la prochaine offensive majeure. On remarque que le premier mois est de loin le plus coûteux pour la Russie, dont les colonnes blindées ne s'attendaient pas à rencontrer une telle résistance. A l'inverse, le mois de mars 2024 est étonnamment calme. Ce mois a été particulièrement boueux, freinant les mouvements à toutes les échelles. De plus le mois précedant a été meurtrier, impliquant un temps de reconstitution des forces. Le mois d'après enregistre quant à lui le deuxième record de pertes mensuelles, ce qui signifie que le mois de mars a également été un mois de préparation pour d'intenses assauts. Ces assauts ayant pris place en avril et se prolongeant jusqu'à début mai sont en parti expliqués par le désir du Kremlin de pouvoir afficher des victoires lors de son défilé militaire annuel du 9 mai, à des fins de propagandes internes et externes. Exception fait des mois d'avril et mai 2024, on voit deux tendances se dessiner au fil du temps. Une première phase de guerre de mouvement s'étalant sur la majorité de l'année 2022, où les deux armées cherchaient à prendre l'initiative, au prix de lourdes pertes. Puis on observe une diminution suivi d'une stagnation du nombre de pertes par mois, indicatif du passage à une guerre de position, où ni la Russie, ni l'Ukraine n'ont réussi à saisir l'initiative. Cela débouche sur un renforcement et une
 bétonisation des lignes de fronts, rendant les assauts et les avancés de grandes envergures de plus en plus ardus. Les offensives russes d'avril et mars 2024 ne porteront que de maigres résultats, surtout au vu des quantités de matériel perdu.
 
 Le graphique "Evolution of the repartition of losses per country and per month" permet de déterminer qui était le plus sur l'offensive sur un mois donné. Comme dans toutes les guerres, l'attaquant enregistre proportionnellement aux effectifs de son armée plus de pertes que le défenseur. Ainsi, sur les mois où le total des pertes se partage plus équitablement entre la Russie et l'Ukraine, malgré la différence considérable d'effectifs, on peut en déduire que c'était l'Ukraine qui a mené le plus d'assauts. Cela arrive en juin 2023 par exemple, mois pendant lequel l'Ukraine a lancé une grande contre offensive sur l'ensemble de la ligne de front, principalement dans les oblasts de Donetsk et Zaporijjia.
@@ -655,7 +653,7 @@ A l'inverse, le graphique *"Distribution of reported status within losses per mo
 
 # Conclusion
 
-L'étude confirme que l'évolution des pertes de chars dans le conflit russo-ukrainien est un indicateur direct de la dynamique de la guerre. La composition des flottes, avec ses proportions de chars obsolètes, vieux et modernes, influence directement les types de véhicules qui sont mis hors de combat. Cependant, l'intensité du conflit, les tactiques employées (offensives contre défensives), l'efficacité des armements antichars modernes et les conditions du terrain sont des facteurs déterminants pour la manière dont ces pertes se manifestent, indépendamment de la génération des chars. L'épuisement des stocks, particulièrement pour la Russie, et la nécessité pour l'Ukraine de s'appuyer sur des donations, suggèrent que la composition future des flottes pourrait continuer à évoluer, avec des implications sur la nature des pertes à venir si le conflit devait se prolonger.
+L'étude montre que l'évolution des pertes de chars dans le conflit russo-ukrainien est un indicateur direct de la dynamique de la guerre. La composition des flottes, avec ses proportions de chars obsolètes, vieux et modernes, influence directement les types de véhicules qui sont mis hors de combat. Cependant, l'intensité du conflit, les tactiques employées (offensives contre défensives), l'efficacité des armements antichars modernes et les conditions du terrain sont des facteurs déterminants pour la manière dont ces pertes se manifestent, indépendamment de la génération des chars. L'épuisement des stocks, particulièrement pour la Russie, et la nécessité pour l'Ukraine de s'appuyer sur des donations, suggèrent que la composition future des flottes pourrait continuer à évoluer, avec des implications sur la nature des pertes à venir si le conflit devait se prolonger.
 
 # References
 **lien du dépôt GitHub:** https://github.com/scarnecchia/oryx_data
